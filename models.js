@@ -29,17 +29,17 @@ blogPostSchema.methods.serialize = function() {
 };
 
 const UserSchema = mongoose.Schema({
-  username: {type: String, required: true},
-  password: {type: String, required: true},
+  username: { type: String, required: true },
+  password: { type: String, required: true },
   firstName: String,
   lastName: String
-}); 
+});
 
 UserSchema.statics.hashPassword = function(password) {
   return bcrypt.hash(password, 10);
 };
 
-UserSchema.statics.validatePassword = function(password) {
+UserSchema.methods.validatePassword = function(password) {
   return bcrypt.compare(password, this.password);
 };
 
