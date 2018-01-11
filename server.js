@@ -35,6 +35,9 @@ const localStrategy = new LocalStrategy((username, password, done) => {
       if (validPassword) {
         console.log('Password is valid');
         return done(null, user);
+      } else {
+        console.log('Password is not correct');
+        return done(null, false);
       }
     })
     .catch(err => {
