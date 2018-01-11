@@ -8,11 +8,39 @@ mongoose.Promise = global.Promise;
 
 const { DATABASE_URL, PORT } = require('./config');
 const { BlogPost } = require('./models');
-
+const passport = require('passport');
+const { Strategy: LocalStrategy } = require('passport-local');
 const app = express();
 
 app.use(morgan('common'));
 app.use(bodyParser.json());
+
+
+const localStrategy = new LocalStrategy((username, password, done) => {
+  try {
+    if (username !== 'bobuser') {
+      console.log('Incorrect username');
+      return done(null, false);
+    }
+    if (password !== 'baseball') {
+      console.log('Incorrect password');
+      return done(null, false);
+    }
+    const user = { username, password };
+    done(null, user);
+
+  } catch (err) {
+    done(err);
+  }
+});
+
+passport.use(localStrategy);
+const localAuth = passport.authenticate('local', { session: false });
+
+app.post('/posts/user', localAuth, (req, res) => {
+
+}); //end app.get
+
 
 
 app.get('/posts', (req, res) => {
@@ -108,7 +136,7 @@ app.delete('/:id', (req, res) => {
 });
 
 
-app.use('*', function (req, res) {
+app.use('*', function(req, res) {
   res.status(404).json({ message: 'Not Found' });
 });
 
