@@ -7,41 +7,65 @@ const mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 
 const { DATABASE_URL, PORT } = require('./config');
-const { BlogPost } = require('./models');
-const passport = require('passport');
-const { Strategy: LocalStrategy } = require('passport-local');
+const { BlogPost, User } = require('./models');
+// const passport = require('passport');
+// const { Strategy: LocalStrategy } = require('passport-local');
 const app = express();
 
 app.use(morgan('common'));
 app.use(bodyParser.json());
 
 
-const localStrategy = new LocalStrategy((username, password, done) => {
-  try {
-    if (username !== 'bobuser') {
-      console.log('Incorrect username');
-      return done(null, false);
-    }
-    if (password !== 'baseball') {
-      console.log('Incorrect password');
-      return done(null, false);
-    }
-    const user = { username, password };
-    done(null, user);
+// const localStrategy = new LocalStrategy((username, password, done) => {
+//   try {
+//     if (username !== 'bobuser') {
+//       console.log('Incorrect username');
+//       return done(null, false);
+//     }
+//     if (password !== 'baseball') {
+//       console.log('Incorrect password');
+//       return done(null, false);
+//     }
+//     const user = { username, password };
+//     done(null, user);
 
-  } catch (err) {
-    done(err);
-  }
+//   } catch (err) {
+//     done(err);
+//   }
+// });
+
+// passport.use(localStrategy);
+// const localAuth = passport.authenticate('local', { session: false });
+
+app.post('/user', (req, res) => {
+
+  const { username, password, firstName, lastName } = req.body;
+
+  User
+    .find({ username })
+    .count()
+    .then(result => {
+      if (result > 0) {
+        res.status(400).json({ error: 'Username already exists' });
+      }
+      return User.hashPassword(password);
+    })
+    .then(digest => {
+      return User.create({
+        username: username,
+        password: digest,
+        firstName: firstName,
+        lastName: lastName
+      });
+    })
+    .then(user => {
+      res.status(201).json(user.apiRepr());
+    })
+    .catch(err => {
+      console.log(`Error message: ${err}`);
+      res.status(500).json({error: 'Internal Server Error'});
+    });
 });
-
-passport.use(localStrategy);
-const localAuth = passport.authenticate('local', { session: false });
-
-app.post('/posts/user', localAuth, (req, res) => {
-
-}); //end app.get
-
-
 
 app.get('/posts', (req, res) => {
   BlogPost
@@ -136,7 +160,7 @@ app.delete('/:id', (req, res) => {
 });
 
 
-app.use('*', function(req, res) {
+app.use('*', function (req, res) {
   res.status(404).json({ message: 'Not Found' });
 });
 
